@@ -40,3 +40,55 @@ class TagDecoder(nn.Module):
     def forward(self, x):
         x = self.tagDecoder(x)
         return x
+'''
+    This is an encoder designed to embed plot overviews
+'''
+class RNNEncoder(nn.Module):
+    def __init__(self, dict_size, hidden_size):
+        super(RNNEncoder, self).__init__()
+        self.dict_size = dict_size
+        self.hidden_size = hidden_size
+        self.embedding = nn.Embedding(dict_size, hidden_size)
+        self.gru = nn.GRU(hidden_size, hidden_size, batch_first=True)
+    def forward(self, input, hidden=None):
+        embeded = self.embedding(input.long())#.view(len(input),1,-1) # batch * length * emb_dim
+        output, hidden = self.gru(embeded, hidden)
+        return output, hidden
+
+'''
+class RNNDecoder(nn.Module):
+    def __init__(self, dict_size, hidden_size):
+        super(RNNDecoder, self).__init__()
+        self.dict_size = dict_size
+        self.hidden_size = hidden_size
+        #self.batch_size = batch_size
+        self.embedding = nn.Embedding(dict_size, hidden_size)
+        self.gru = nn.GRU(hidden_size, hidden_size)
+        self.linear = nn.Linear(hidden_size, dict_size)
+    def forward(self, input, hidden):
+        embeded = self.embedding(input.long()).view(len(input),1,-1)
+        temp, hidden = self.gru(embeded, hidden)
+        output = temp.view(len(input),-1)
+        #temp = self.linear(flatten)
+        output = F.log_softmax(self.linear(output), dim=1)
+        return output
+'''
+
+'''
+    Those are encoder designed to embed user/item (except overview) features
+'''
+class UserEncoder(nn.Module):
+    def __init__(self, dict_size, embed_size):
+        self.embedding = nn.Embedding(dict_size, embed_size)            # batch * length * emb_dim
+    
+    def forward(self, x):                                               # x = user_onehot
+        user_embed = self.embedding(x).mean(dim=1)                      # batch * emb_dim
+        return user_embed
+
+class ItemEncoder(nn.Module):
+    def __init__(self, dict_size, embed_size):
+        self.embedding = nn.Embedding(dict_size, embed_size)
+
+    def forward(self, x):                                               # item_features = (item_onehot, item_overview), x = item_features[0]
+        item_embed = self.embedding(x).mean(dim=1)
+        return item_embed
